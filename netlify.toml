@@ -1,0 +1,8 @@
+[functions]
+  directory = "netlify/functions"
+  included_files = ["mj-gate-core.js"]
+
+[[redirects]]
+  from = "/api/mj-gate"
+  to = "/.netlify/functions/mj-gate"
+  status = 200
