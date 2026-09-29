@@ -1,0 +1,83 @@
+{
+  "success": true,
+  "batches": [
+    {
+      "_id": "204",
+      "courseId": "204",
+      "name": "Mission Jeet Batch 204",
+      "byName": "Mission Jeet",
+      "language": "Hinglish",
+      "previewImage": "",
+      "category": "exam",
+      "type": "MJ_BATCH",
+      "source": "mission-jeet",
+      "slug": "mission-jeet-204",
+      "subBatches": []
+    },
+    {
+      "_id": "203",
+      "courseId": "203",
+      "name": "Mission Jeet Batch 203",
+      "byName": "Mission Jeet",
+      "language": "Hinglish",
+      "previewImage": "",
+      "category": "exam",
+      "type": "MJ_BATCH",
+      "source": "mission-jeet",
+      "slug": "mission-jeet-203",
+      "subBatches": []
+    },
+    {
+      "_id": "201",
+      "courseId": "201",
+      "name": "Mission Jeet Batch 201",
+      "byName": "Mission Jeet",
+      "language": "Hinglish",
+      "previewImage": "",
+      "category": "exam",
+      "type": "MJ_BATCH",
+      "source": "mission-jeet",
+      "slug": "mission-jeet-201",
+      "subBatches": []
+    },
+    {
+      "_id": "200",
+      "courseId": "200",
+      "name": "Mission Jeet Batch 200",
+      "byName": "Mission Jeet",
+      "language": "Hinglish",
+      "previewImage": "",
+      "category": "exam",
+      "type": "MJ_BATCH",
+      "source": "mission-jeet",
+      "slug": "mission-jeet-200",
+      "subBatches": []
+    },
+    {
+      "_id": "185",
+      "courseId": "185",
+      "name": "Mission Jeet Batch 185",
+      "byName": "Mission Jeet",
+      "language": "Hinglish",
+      "previewImage": "",
+      "category": "exam",
+      "type": "MJ_BATCH",
+      "source": "mission-jeet",
+      "slug": "mission-jeet-185",
+      "subBatches": []
+    },
+    {
+      "_id": "184",
+      "courseId": "184",
+      "name": "Mission Jeet Batch 184",
+      "byName": "Mission Jeet",
+      "language": "Hinglish",
+      "previewImage": "",
+      "category": "exam",
+      "type": "MJ_BATCH",
+      "source": "mission-jeet",
+      "slug": "mission-jeet-184",
+      "subBatches": []
+    }
+  ]
+}
