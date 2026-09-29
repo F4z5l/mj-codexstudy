@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Course – Codex Study</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
+<style>
+:root{--bg:#080a0f;--panel:#12151e;--soft:#1a1e2a;--text:#eef1f7;--muted:#8d95a8;--accent:#7c9cff;--line:#232838}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+header{position:sticky;top:0;z-index:5;display:flex;gap:12px;align-items:center;padding:14px 18px;background:rgba(8,10,15,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+button{font:inherit;cursor:pointer}.back{background:var(--soft);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 14px}
+h1{font-size:17px;margin:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+main{max-width:900px;margin:0 auto;padding:18px}.crumbs{color:var(--muted);font-size:13px;margin-bottom:14px}
+.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.tab{background:var(--soft);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:6px 14px}.tab.on{background:var(--accent);color:#0a0d18;border-color:var(--accent)}
+.item{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+.item:hover{border-color:var(--accent)}.ic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--soft);font-size:20px;flex:none}
+.t{font-weight:600}.s{color:var(--muted);font-size:12px;margin-top:3px}.lock{opacity:.55}
+.msg{color:var(--muted);text-align:center;padding:40px 10px}
+#player{display:none;margin-bottom:18px}#player video,#player iframe{width:100%;border-radius:14px;background:#000;border:0}#player iframe{height:78vh}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.row a,.row button{background:var(--soft);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:7px 12px;text-decoration:none;font-size:13px}
+</style>
+</head>
+<body>
+<header><button class="back" id="back">← Back</button><h1 id="title">Course</h1></header>
+<main>
+  <div class="crumbs" id="crumbs"></div>
+  <div id="player"><div id="pbody"></div><div class="t" id="ptitle" style="margin-top:10px"></div><div class="row" id="prow"></div></div>
+  <div class="tabs" id="tabs"></div>
+  <div id="list"><div class="msg">Loading…</div></div>
+</main>
+<script>
+const API="https://apismaxx-mj.vercel.app/course/all-content";
+const q=new URLSearchParams(location.search);
+const courseId=q.get("id");const courseName=q.get("name")||"Course";
+document.getElementById("title").textContent=courseName;document.title=courseName+" – Codex Study";
+let stack=[{id:"0",title:courseName}],items=[],filter="all",hls=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function parseDl(d){if(!d)return[];try{const a=typeof d=="string"?JSON.parse(d):d;return Array.isArray(a)?a.filter(x=>x&&x.url).map(x=>({title:x.title||"Quality",url:x.url})):[]}catch{return[]}}
+function channelHls(dl){try{if(!dl.length)return null;const p=new URL(dl[0].url).pathname.split("/").filter(Boolean);const i=p.indexOf("download");if(i<0||i+1>=p.length)return null;const r=p[i+1],o=p[p.length-1];let u=o;const c=o.lastIndexOf("_");if(c!==-1)u=o.substring(0,c);
+  const m=/^\d+$/.test(u)?u.slice(-7):((u.replace(/_video_VOD.*$/,"").split("_").pop())||u).slice(-7);
+  return`https://d1ji5qpleqhfrc.cloudfront.net/file_library/videos/channel_vod_non_drm_hls/${r}/${u}/${u}_${m}.m3u8`}catch{return null}}
+function kind(it){if(it.type==="folder")return"folder";const d=it.data||{};const u=(d.file_url||"").toLowerCase();
+  if(d.file_type==1||u.endsWith(".pdf"))return"pdf";if(d.file_type==3||u.includes(".m3u8")||u.includes(".mp4")||d.download_urls||d.duration)return"video";if(u)return"link";return"pdf"}
+function srcOf(it){const d=it.data||{};const dl=parseDl(d.download_urls);return{main:d.file_url||channelHls(dl)||(dl[0]&&dl[0].url)||"",dl}}
+
+async function load(){
+  if(!courseId){$("list").innerHTML='<div class="msg">No course selected.</div>';return}
+  const cur=stack[stack.length-1];$("list").innerHTML='<div class="msg">Loading…</div>';
+  $("crumbs").textContent=stack.map(s=>s.title).join("  ›  ");
+  try{const r=await fetch(`${API}?course_id=${encodeURIComponent(courseId)}&folder_id=${encodeURIComponent(cur.id)}`);const j=await r.json();items=j.success&&Array.isArray(j.data)?j.data:[]}
+  catch(e){items=[];$("list").innerHTML='<div class="msg">Could not load content. Check your internet and try again.</div>';return}
+  filter="all";render();
+}
+function render(){
+  const counts={all:items.length,folder:0,video:0,pdf:0};items.forEach(i=>{const k=kind(i);counts[k]=(counts[k]||0)+1});
+  const names={all:"All",folder:"Folders",video:"Lectures",pdf:"Notes"};
+  $("tabs").innerHTML=Object.keys(names).filter(k=>k==="all"||counts[k]).map(k=>`<button class="tab ${filter===k?"on":""}" data-f="${k}">${names[k]} (${counts[k]})</button>`).join("");
+  const list=items.filter(i=>filter==="all"||kind(i)===filter);
+  if(!list.length){$("list").innerHTML='<div class="msg">Nothing here yet.</div>';return}
+  $("list").innerHTML=list.map((it,idx)=>{const k=kind(it);const d=it.data||{};const cc=d.content_counts;
+    const sub=k==="folder"&&cc?[cc.video&&(cc.video.free+cc.video.paid)?`${cc.video.free+cc.video.paid} lectures`:"",cc.pdf&&(cc.pdf.free+cc.pdf.paid)?`${cc.pdf.free+cc.pdf.paid} notes`:"",cc.folders&&cc.folders.direct?`${cc.folders.direct} folders`:""].filter(Boolean).join(" · ")
+      :k==="video"?"Lecture"+(d.duration?` · ${Math.round(d.duration/60)} min`:""):k==="pdf"?"Notes / PDF":"Link";
+    const has=k==="folder"||srcOf(it).main||d.dynamic_link;
+    return`<button class="item ${has?"":"lock"}" data-i="${items.indexOf(it)}"><span class="ic">${{folder:"📁",video:"▶️",pdf:"📄",link:"🔗"}[k]}</span><span><div class="t">${esc(it.title)}</div><div class="s">${esc(sub)}</div></span></button>`}).join("");
+}
+function stopPlayer(){if(hls){hls.destroy();hls=null}$("pbody").innerHTML="";$("player").style.display="none"}
+function open(it){
+  const k=kind(it);
+  if(k==="folder"){stopPlayer();stack.push({id:String(it.entity_id||it.data.id),title:it.title});load();return}
+  const {main,dl}=srcOf(it);const d=it.data||{};
+  if(!main){if(d.dynamic_link){window.open(d.dynamic_link,"_blank");return}alert("This item is locked / not available.");return}
+  stopPlayer();$("player").style.display="block";$("ptitle").textContent=it.title;
+  let row=`<a href="${esc(main)}" target="_blank" rel="noopener">Open in new tab</a>`;
+  if(k==="video"){
+    const v=document.createElement("video");v.controls=true;v.autoplay=true;v.playsInline=true;$("pbody").appendChild(v);
+    const play=u=>{if(hls){hls.destroy();hls=null}if(u.includes(".m3u8")&&window.Hls&&Hls.isSupported()){hls=new Hls();hls.loadSource(u);hls.attachMedia(v)}else v.src=u};
+    play(main);
+    dl.forEach((x,n)=>row+=`<button data-q="${n}">${esc(x.title)}</button>`);
+    $("prow").innerHTML=row;$("prow").querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>play(dl[+b.dataset.q].url));
+  }else{
+    const f=document.createElement("iframe");f.src=k==="pdf"?`https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(main)}`:main;$("pbody").appendChild(f);
+    $("prow").innerHTML=row+(k==="pdf"?`<a href="${esc(main)}" download>Download</a>`:"");
+  }
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+$("tabs").onclick=e=>{const b=e.target.closest("[data-f]");if(b){filter=b.dataset.f;render()}};
+$("list").onclick=e=>{const b=e.target.closest("[data-i]");if(b)open(items[+b.dataset.i])};
+$("back").onclick=()=>{if($("player").style.display==="block"){stopPlayer();return}if(stack.length>1){stack.pop();load()}else location.href="index.html"};
+load();
+</script>
+</body>
+</html>
